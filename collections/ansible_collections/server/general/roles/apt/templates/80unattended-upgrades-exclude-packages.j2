@@ -1,0 +1,7 @@
+//{{ ansible_managed }}
+
+Unattended-Upgrade::Package-Blacklist {
+{% for item in apt_unattended_upgrades_exclude_packages %}
+  "{{ item }}$";
+{% endfor %}
+};

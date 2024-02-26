@@ -1,0 +1,60 @@
+---
+- name: Install dependencies
+  ansible.builtin.apt:
+    name: "{{ item }}"
+  loop:
+    # gui
+    - xorg
+    - xdotool
+    - golang
+    # pixelnuke
+    - git
+    - build-essential
+    - libevent-dev
+    - libglew-dev
+    - libglfw3-dev
+
+- name: Git checkout
+  ansible.builtin.git:
+    repo: "{{ pixelflut_repo }}"
+    dest: /home/pi/pixelflut
+
+- name: Build pixelnuke
+  community.general.make:
+    chdir: /home/pi/pixelflut/pixelnuke
+
+- name: deploy startup script
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: pi
+    group: pi
+    mode: u=rwx
+  loop:
+    - src: start.sh
+      dest: /home/pi/start.sh
+    - src: ip.sh
+      dest: /home/pi/ip.sh
+    - src: xinitrc
+      dest: /home/pi/.xinitrc
+    - src: bash_profile
+      dest: /home/pi/.bash_profile
+
+- name: copy systemd file
+  ansible.builtin.template:
+    src: "pixelflut.service"
+    dest: /lib/systemd/system
+    mode: 644
+
+- name: enable and start service
+  systemd:
+    name: pixelflut.service
+    state: started
+    enabled: true
+    daemon_reload: true
+
+
+
+# - name: disable sleep
+#   ansible.builtin.shell:
+#     cmd: export DISPLAY=:0; xset -dpms

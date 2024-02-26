@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+
+interface={{ dnsmasq_interface }}
+dhcp-range={{ dnsmasq_dhcp_range_start }},{{ dnsmasq_dhcp_range_end }},{{ dnsmasq_dhcp_lease_time }}
+dhcp-option=option:router,{{ dnsmasq_router }}
+dhcp-option=option:dns-server,{{ dnsmasq_dns_server }}

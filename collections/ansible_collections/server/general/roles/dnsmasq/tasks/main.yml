@@ -1,0 +1,41 @@
+---
+- name: Install dnsmasq
+  apt:
+    name: dnsmasq
+    state: present
+  become: true
+
+- name: Copy configuration files
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - src: dnsmasq.conf.j2
+      dest: /etc/dnsmasq.conf
+    - src: hosts.j2
+      dest: /etc/hosts
+  notify: Restart dnsmasq service
+
+- name: "Configure {{ dnsmasq_interface }}"
+  ansible.builtin.copy:
+    dest: "/etc/network/interfaces.d/{{ dnsmasq_interface }}"
+    content: |
+      # Ethernet
+      auto {{ dnsmasq_interface }}
+      allow-hotplug {{ dnsmasq_interface }}
+      iface eth0 inet static
+      address {{ ip }}
+      netmask 255.255.255.0
+      gateway {{ ip }}
+      dns-nameservers {{ ip }}
+
+
+- name: Ensure dnsmasq service is enabled and started
+  service:
+    name: dnsmasq
+    state: started
+    enabled: true
+  become: true

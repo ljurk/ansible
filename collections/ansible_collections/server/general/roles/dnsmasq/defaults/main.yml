@@ -1,0 +1,8 @@
+---
+dnsmasq_interface: "eth0"
+dnsmasq_dhcp_range_start: "192.168.1.100"
+dnsmasq_dhcp_range_end: "192.168.1.200"
+dnsmasq_dhcp_lease_time: "12h"
+dnsmasq_router: "192.168.1.1"
+dnsmasq_dns_server: "192.168.1.1"
+dnsmasq_dns_entries: []

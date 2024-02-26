@@ -1,0 +1,49 @@
+---
+- name: Install unattended-upgrades
+  apt:
+    pkg: unattended-upgrades
+
+- name: Create configs
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/apt/apt.conf.d/{{ item }}"
+    owner: root
+    group: root
+    mode: a=r,u+w
+  loop:
+    - 80unattended-upgrades-exclude-packages
+    - 80unattended-upgrades-reboot
+    - 20auto-upgrades
+
+# ref. https://help.ubuntu.com/community/Lubuntu/Documentation/RemoveOldKernels#Shell
+- name: "Enable remove unused deps in /etc/apt/apt.conf.d/50unattended-upgrades"
+  lineinfile:
+    dest: "/etc/apt/apt.conf.d/50unattended-upgrades"
+    line: 'Unattended-Upgrade::Remove-Unused-Dependencies "true";'
+    insertafter: '^//Unattended-Upgrade::Remove-Unused-Dependencies'
+
+- name: Configure upgrade time
+  ansible.builtin.lineinfile:
+    path: /lib/systemd/system/apt-daily-upgrade.timer
+    regexp: '^OnCalendar'
+    line: OnCalendar=*-*-* {{ apt__upgrade_time }}
+  notify: Restart apt-daily-upgrade.timer
+
+- name: Configure update time
+  ansible.builtin.lineinfile:
+    path: /lib/systemd/system/apt-daily.timer
+    regexp: '^OnCalendar'
+    line: OnCalendar=*-*-* {{ apt__update_time }}
+  notify: Restart apt-daily.timer
+
+- name: Remove RandomizedDelaySec
+  ansible.builtin.lineinfile:
+    path: "{{ item }}"
+    regexp: "^RandomizedDelaySec"
+    state: absent
+  notify:
+    - Restart apt-daily.timer
+    - Restart apt-daily-upgrade.timer
+  loop:
+    - /lib/systemd/system/apt-daily-upgrade.timer
+    - /lib/systemd/system/apt-daily.timer

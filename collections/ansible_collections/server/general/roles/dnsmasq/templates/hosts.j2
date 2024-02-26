@@ -1,0 +1,8 @@
+# {{ ansible_managed }}
+127.0.0.1 localhost
+{{ ansible_default_ipv4.address }} {{ ansible_hostname }}
+
+# Custom entries
+{% for entry in dnsmasq_dns_entries %}
+{{ entry.ip }} {{ entry.hostname }}
+{% endfor %}

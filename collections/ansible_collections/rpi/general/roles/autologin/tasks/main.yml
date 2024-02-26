@@ -1,0 +1,13 @@
+---
+# systemctl set-default multi-user.target
+# see: https://raspberrypi.stackexchange.com/questions/40415/how-to-enable-auto-login
+- name: Create a symbolic link
+  ansible.builtin.file:
+    src: /lib/systemd/system/getty@.service
+    dest: /etc/systemd/system/getty.target.wants/getty@tty1.service
+    state: link
+
+- name: Create service
+  ansible.builtin.template:
+    src: autologin.conf
+    dest: /etc/systemd/system/getty@tty1.service.d/autologin.conf
