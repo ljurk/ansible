@@ -1,4 +1,4 @@
 ---
 - name: deploy nginx
   community.docker.docker_container:
-    image: nginx:1.25.4-alpine
+    image: nginx:1.2.4-alpine
