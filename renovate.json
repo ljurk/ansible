@@ -2,5 +2,17 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
-  ]
+  ],
+  "docker": {
+    "enabled": true,
+    "schedule": "after 12pm on the first Monday of the month"
+  },
+  "packageRules": [
+    {
+      "packagePatterns": [
+        "[^:]+:\\d+\\.\\d+\\.\\d+-[a-zA-Z0-9]+"
+      ],
+      "groupName": "docker-image-updates",
+      "enabled": true
+    }
 }
