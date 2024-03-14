@@ -3,11 +3,5 @@
   "extends": [
     "config:recommended",
     ":semanticCommits"
-  ],
-  "docker": {
-    "enabled": true
-  },
-  "python": {
-    "enabled": true
-  }
+  ]
 }
