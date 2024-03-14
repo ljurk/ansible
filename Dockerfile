@@ -1,3 +1,3 @@
-FROM grafana/grafana:9.5.17-ubuntu
+FROM grafana/grafana:10.4.0-ubuntu
 
 RUN echo "hello world"
