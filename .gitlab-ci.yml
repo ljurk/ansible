@@ -12,7 +12,7 @@ markdownlint:
 
 ansible-lint:
   stage: analysis
-  image: registry.gitlab.com/pipeline-components/ansible-lint:0.23.0
+  image: registry.gitlab.com/pipeline-components/ansible-lint:0.74.0
   variables:
     ANSIBLE_DUPLICATE_YAML_DICT_KEY: ignore
   artifacts:
