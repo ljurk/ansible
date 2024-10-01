@@ -5,4 +5,4 @@
 
 - name: deploy grafana
   community.docker.docker_container:
-    image: grafana/grafana:9.5.17
+    image: grafana/grafana:11.2.2
