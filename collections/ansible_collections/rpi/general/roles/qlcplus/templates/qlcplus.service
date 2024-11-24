@@ -1,0 +1,14 @@
+[Unit]
+Description=qlcplus
+
+[Service]
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/wal/.Xauthority
+ExecStart={{ qlcplus__startup_command }}
+Restart=always
+RestartSec=10s
+KillMode=process
+TimeoutSec=infinity
+
+[Install]
+WantedBy=graphical.target

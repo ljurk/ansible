@@ -1,0 +1,6 @@
+---
+qlcplus__display: HDMI-A-1
+qlcplus__startup_command: /usr/bin/qlcplus --web --web-port 80 --fullscreen normal --operate
+qlcplus__resolution: 1024x600
+qlcplus__user: wal
+qlcplus__repo: https://github.com/23wal/light.git
