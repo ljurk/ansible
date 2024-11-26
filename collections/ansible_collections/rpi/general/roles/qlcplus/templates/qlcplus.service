@@ -5,6 +5,7 @@ Description=qlcplus
 Environment=DISPLAY=:0
 Environment=XAUTHORITY=/home/wal/.Xauthority
 ExecStart={{ qlcplus__startup_command }}
+WorkingDirectory={{ qlcplus__working_dir }}
 Restart=always
 RestartSec=10s
 KillMode=process
