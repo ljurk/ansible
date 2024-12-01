@@ -1,0 +1,41 @@
+---
+- name: create folder
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /opt/crafty
+    - /opt/crafty/backups
+    - /opt/crafty/logs
+    - /opt/crafty/servers
+    - /opt/crafty/config
+    - /opt/crafty/import
+
+- name: Start container
+  containers.podman.podman_container:
+    name: crafty
+    image: registry.gitlab.com/crafty-controller/crafty-4:latest
+    network:
+      - podman-dns
+    env:
+      TZ: Etc/UTC
+    ports:
+      - "443:8443" # HTTPS
+      - "8123:8123" # DYNMAP
+      - "19132:19132/udp" # BEDROCK
+      - "25500-25600:25500-25600" # MC SERV PORT RANGE
+    volumes:
+      - /opt/crafty/backups:/crafty/backups
+      - /opt/crafty/logs:/crafty/logs
+      - /opt/crafty/servers:/crafty/servers
+      - /opt/crafty/config:/crafty/app/config
+      - /opt/crafty/import:/crafty/import
+    generate_systemd:
+      path: /etc/systemd/system/
+      new: true
+
+- name: Start and enable service
+  ansible.builtin.systemd:
+    name: container-crafty.service
+    enabled: true
+    state: started
