@@ -1,0 +1,59 @@
+---
+- name: Install ola
+  ansible.builtin.apt:
+    name: ola
+
+- name: Enable plugins
+  ansible.builtin.lineinfile:
+    path: "/etc/ola/{{ item }}"
+    regexp: "^enabled ="
+    line: "enabled = true"
+  loop:
+    - ola-ftdidmx.conf
+    - ola-artnet.conf
+- name: Disable plugins
+  ansible.builtin.lineinfile:
+    path: "/etc/ola/{{ item }}"
+    regexp: "^enabled ="
+    line: "enabled = false"
+  notify: Restart ola
+  loop:
+    - ola-dummy.conf
+    - ola-e131.conf
+    - ola-espnet.conf
+    - ola-gpio.conf
+    - ola-karate.conf
+    - ola-kinet.conf
+    - ola-milinst.conf
+    - ola-opendmx.conf
+    - ola-openpixelcontrol.conf
+    - ola-osc.conf
+    - ola-pathport.conf
+    - ola-renard.conf
+    - ola-sandnet.conf
+    - ola-shownet.conf
+    - ola-spi.conf
+    - ola-stageprofi.conf
+    - ola-usbdmx.conf
+    - ola-usbserial.conf
+
+- name: allow binding of port 80
+  community.general.capabilities:
+    path: /usr/bin/olad
+    capability: cap_net_bind_service=ep
+    state: present
+  notify: Restart ola
+
+- name: Change port to 80
+  ansible.builtin.lineinfile:
+    path: /etc/init.d/olad
+    regexp: "^DAEMON_ARGS="
+    line: 'DAEMON_ARGS="--syslog --log-level 3 --config-dir /etc/ola --http-port=80"'
+  notify: Restart ola
+
+- name: Enable ola service
+  ansible.builtin.service:
+    name: olad.service
+    state: started
+    daemon_reload: true
+    enabled: true
