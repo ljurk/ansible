@@ -1,0 +1,24 @@
+---
+debian:
+  vars:
+    ansible_user: debian
+    ansible_become: true
+  hosts:
+    tailscale:
+      ansible_host: 192.168.0.5
+    prometheus:
+      ansible_host: 192.168.0.31
+    grafana:
+      ansible_host: 192.168.0.32
+    crafty:
+      ansible_host: 192.168.0.50
+    rpi-wal:
+      ansible_host: rpi-wal.local
+      ansible_user: wal
+    wal-artnet:
+      ansible_host: wal-artnet.local
+      ansible_user: wal
+    router:
+      ansible_host: 10.13.12.1
+      ansible_user: pi
+      ansible_become: true

@@ -1,0 +1,28 @@
+---
+- hosts: all
+  roles:
+    - server.general.apt
+    - server.general.nftables
+    - server.general.podman
+    - server.general.node_exporter
+
+- hosts: crafty
+  roles:
+    - server.general.crafty
+
+- hosts: grafana
+  roles:
+    - zih.grafana.grafana
+
+- hosts: prometheus
+  roles:
+    - server.general.prometheus
+
+- hosts: rpi-wal
+  roles:
+    - rpi.general.wifi_config
+    - rpi.general.qlcplus
+
+- hosts: wal-artnet
+  roles:
+    - rpi.general.artnet_node

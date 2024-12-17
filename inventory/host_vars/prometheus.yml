@@ -1,0 +1,67 @@
+---
+prometheus__scrape_configs_http:
+  - job_name: "blackbox"
+    metrics_path: /probe
+    params:
+      module: [http_2xx] # Look for a HTTP 200 response.
+    static_configs:
+      - targets:
+          - https://tu-dresden.de
+          - https://datashare.tu-dresden.de/status.php
+          - https://github.com
+          - https://hass.turtok.duckdns.org
+          - https://pve.turtok.duckdns.org
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: "blackbox_exporter:9115" # Blackbox exporter.
+      - target_label: region
+        replacement: "local"
+  - job_name: "hass"
+    scrape_interval: 60s
+    metrics_path: /api/prometheus
+
+    # Legacy api password
+    # Long-Lived Access Token
+    bearer_token: !vault |
+      $ANSIBLE_VAULT;1.2;AES256;lab
+      35663366643165323639323035333362333165333031393932613265336537666634303131343331
+      3135633765313862323165376665303262343661383930350a333233323337653664663639366165
+      63303534636665346264353133346538613536656238396366393366633835306566356131663533
+      3062666232636435300a356535616461316430656438643862336634343839326632356134643661
+      38336661316231316264343334326133363132663934633230613034363333326664663330393239
+      36343863646662313966346263623231636637383263323464363139363963303063353161313462
+      66643037623031666463383963653063646539393661326434396336383066303538336230626162
+      63373932623930323038316632613961646266313034643263323861393864663766333763346637
+      36303530646461376161663461663764626534333066346235336465373530306232346432623161
+      30623037666338303234623536366239306136653666303062663863653265333365303030333237
+      65363837656162386132363263316366386237376138353139353935633533353864313466643333
+      65306639666165653537386238613531646464306462353734363135653333613732343765623333
+      36623732383330346364313138653864383932656337303838373137663961636439
+
+    scheme: https
+    static_configs:
+      - targets: ["hass.turtok.duckdns.org"]
+
+prometheus__scrape_configs_node_exporter:
+  - job_name: "node_exporter"
+    static_configs:
+      - targets:
+          - 192.168.0.31:9100@prom.local
+          - 192.168.0.32:9100@grafana.local
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: "(.*)@.*"
+        replacement: $1
+        target_label: __param_target
+      - source_labels: [__address__]
+        regex: ".*@(.*)"
+        replacement: $1
+        target_label: instance
+      - source_labels: [__address__]
+        regex: "(.*)@.*"
+        replacement: $1
+        target_label: __address__
