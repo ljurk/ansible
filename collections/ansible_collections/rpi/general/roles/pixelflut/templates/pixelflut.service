@@ -1,0 +1,11 @@
+[Unit]
+Description=pixelflut
+After=display-manager.service
+
+[Service]
+User=pi
+Environment=DISPLAY=:0
+ExecStart=/home/pi/start.sh
+
+[Install]
+WantedBy=multi-user.target

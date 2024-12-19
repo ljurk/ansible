@@ -33,8 +33,6 @@
   loop:
     - src: start.sh
       dest: /home/pi/start.sh
-    - src: ip.sh
-      dest: /home/pi/ip.sh
     - src: xinitrc
       dest: /home/pi/.xinitrc
     - src: bash_profile
@@ -52,9 +50,3 @@
     state: started
     enabled: true
     daemon_reload: true
-
-
-
-# - name: disable sleep
-#   ansible.builtin.shell:
-#     cmd: export DISPLAY=:0; xset -dpms
