@@ -1,0 +1,3 @@
+# miniflux
+
+Installs miniflux
