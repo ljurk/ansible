@@ -1,0 +1,79 @@
+---
+stages:
+  - analysis
+
+markdownlint:
+  stage: analysis
+  image: registry.gitlab.com/pipeline-components/markdownlint-cli2:latest
+  script:
+    - markdownlint-cli2 --version
+    - sed -i 's/🔗 //' README.md
+    - markdownlint-cli2 **/*.md "#roles/access_switch" "#roles/esx_server" "#roles/networking" "#roles/openvpn_server" --config .config/.markdownlint.yml
+
+ansible-lint:
+  stage: analysis
+  image: registry.gitlab.com/pipeline-components/ansible-lint:0.23.0
+  variables:
+    ANSIBLE_DUPLICATE_YAML_DICT_KEY: ignore
+  artifacts:
+    when: always
+    reports:
+      junit: ansible-lint.xml
+  script:
+    # fix world-writable-ansible-cfg
+    - chmod -R 755 .
+    # fix vault-password-client
+    - chmod 0600 vault-password-client.py
+    # install dependencies
+    - find . -type f -name 'requirements.txt' -path '*/meta/*' -exec pip install -r {} \;
+    - find . -type f -name 'requirements.yml' -path '*/meta/*' -exec ansible-galaxy collection install -r {} -p /app/lib/python3.12/site-packages/ansible_collections \;
+    # remove trailing / from PATH
+    - export PATH=$(echo $PATH | sed 's#/$##g')
+    - ansible-lint --version
+    - pip install six
+    - ansible-lint --nocolor -c .config/ansible-lint.yml -R -r .config/ansible-lint-rules -f pep8 > ansible-lint-output.txt || status=$?
+    - cat ansible-lint-output.txt | ansible-lint-junit -o ansible-lint.xml
+    - cat ansible-lint-output.txt
+    - exit $status
+
+commitlint:
+  stage: analysis
+  image: docker.io/node
+  except:
+    - master
+  script:
+    - npm install --save-dev @commitlint/{config-conventional,cli}@v18.6.0
+    # leave detached state
+    - git fetch origin master
+    - git checkout master
+    - git pull --rebase=true
+    - git checkout $CI_COMMIT_REF_NAME
+    - git pull --rebase=true
+    # get first commit of branch
+    - startingCommit=$(git log --format=format:%H master.."$CI_COMMIT_REF_NAME" | tail -1)
+    - startingCommitMessage=$(git log --format=%B -n 1 ${startingCommit})
+    - echo "commitlint from ${startingCommit}(${startingCommitMessage})"
+    - npx commitlint -x @commitlint/config-conventional -f "${startingCommit}"
+
+allowed_signers:
+  stage: analysis
+  image: docker.io/bitnami/git
+  except:
+    - master
+  script:
+    - git config --global commit.gpgsign true
+    - git config --global gpg.format ssh
+    - git config --global gpg.ssh.allowedSignersFile ./allowed_signers
+    # leave detached state
+    - git fetch origin master
+    - git checkout master
+    - git pull --rebase=true
+    - git checkout $CI_COMMIT_REF_NAME
+    - git pull --rebase=true
+    # get first commit of branch
+    - startingCommit=$(git log --format=format:%H master.."$CI_COMMIT_REF_NAME" | tail -1)
+    - startingCommitMessage=$(git log --format=%B -n 1 ${startingCommit})
+    - output=$(git log --format=format:%H "${startingCommit}..HEAD" | xargs -i sh -c "echo {}; git verify-commit {} 2>&1 || echo ERROR")
+    - numberOfBadCommits=$(echo "$output" | { grep '^ERROR' || true; } | wc -l)
+    - echo "$CI_COMMIT_REF_NAME(${startingCommitMessage}) contains $numberOfBadCommits bad commit(s)"
+    - if [[ $numberOfBadCommits -ne 0 ]]; then printf "$output" && exit 1; fi
