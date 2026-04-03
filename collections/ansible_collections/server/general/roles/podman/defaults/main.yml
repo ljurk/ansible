@@ -1,0 +1,10 @@
+---
+podman__dns_enabled_network: podman-dns
+podman__dns_enabled_network_ip_range:
+podman__dns_enabled_network_gateway:
+podman__dns_enabled_network_subnet:
+podman__nftables_config:
+podman__auto_update_time: "Mon *-*-* 02:00"
+podman__auto_update: true
+podman__auto_update_quadlets: false
+podman__provide_init: true

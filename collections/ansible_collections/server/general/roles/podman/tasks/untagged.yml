@@ -1,0 +1,57 @@
+---
+- name: Install podman and dependencies
+  ansible.builtin.apt:
+    name:
+      - podman
+      - aardvark-dns
+    state: latest
+    update_cache: true
+  register: podman_installed
+
+- name: Setup podman autoupdates
+  when: podman__auto_update
+  block:
+    - name: Change auto update time to monday 2:00
+      ansible.builtin.lineinfile:
+        path: /lib/systemd/system/podman-auto-update.timer
+        regexp: "^OnCalendar.*$"
+        line: "OnCalendar={{ podman__auto_update_time }}"
+
+    - name: Activate auto update Timer Unit
+      ansible.builtin.systemd:
+        name: podman-auto-update.timer
+        enabled: true
+        daemon_reload: true
+
+- name: Create drop-in directory for .container units
+  ansible.builtin.file:
+    path: /etc/containers/systemd/container.d/
+    owner: root
+    group: root
+    mode: u=rwX,g=rX,o=rX
+    state: directory
+
+- name: Create drop-in file to enable auto update for all quadlet containers
+  ansible.builtin.copy:
+    dest: /etc/containers/systemd/container.d/autoupdate.conf
+    mode: u=rw,g=r,o=r
+    content: |
+      [Container]
+      AutoUpdate=registry
+
+- name: Create podman network
+  containers.podman.podman_network:
+    name: "{{ podman__dns_enabled_network }}"
+    disable_dns: false
+    ip_range: "{{ podman__dns_enabled_network_ip_range | d(omit) }}"
+    gateway: "{{ podman__dns_enabled_network_gateway | d(omit) }}"
+    subnet: "{{ podman__dns_enabled_network_subnet | d(omit) }}"
+    # interface_name: foobar
+    # see https://github.com/containers/ansible-podman-collections/pull/677/files
+    # see https://github.com/containers/podman/commit/ed99a979ce5f6250594eeb60a7b343b2c09896cf
+
+- name: Change interface name
+  ansible.builtin.lineinfile:
+    path: "/etc/containers/networks/{{ podman__dns_enabled_network }}.json"
+    regexp: '\s+"network_interface".*'
+    line: '     "network_interface": "{{ podman__dns_enabled_network }}",'
