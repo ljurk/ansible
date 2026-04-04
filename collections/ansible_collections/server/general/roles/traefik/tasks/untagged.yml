@@ -1,0 +1,60 @@
+---
+- name: Create traefik configuration directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "u=rwX,g=rX,o=rX"
+  loop:
+    - "{{ traefik__dir }}"
+    - "{{ traefik__dir }}/acme"
+
+- name: Create traefik.yml
+  ansible.builtin.copy:
+    content: "{{ traefik__config | to_nice_yaml }}"
+    dest: "{{ traefik__dir }}/traefik.yml"
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
+  notify: Restart traefik
+
+- name: Create routes.yml
+  ansible.builtin.copy:
+    content: "{{ traefik__routes | to_nice_yaml }}"
+    dest: "{{ traefik__dir }}/routes.yml"
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
+
+- name: Deploy traefik
+  containers.podman.podman_container:
+    name: "traefik"
+    image: "{{ traefik__image }}"
+    state: quadlet
+    quadlet_options:
+      - |
+        [Install]
+        WantedBy=default.target
+    network:
+      - podman-dns
+    command:
+      - "--configFile=/etc/traefik/traefik.yml"
+    ports: "{{ traefik__ports }}"
+    volumes:
+      - "{{ traefik__dir }}:/etc/traefik:ro"
+      - "{{ traefik__dir }}/acme:/acme:rw"
+    cap_add:
+      - NET_BIND_SERVICE
+    cap_drop: "ALL"
+    security_opt:
+      - no-new-privileges
+    read_only: true
+  notify: Restart traefik
+
+- name: Enable and start traefik service
+  ansible.builtin.systemd:
+    name: "traefik.service"
+    state: started
+    daemon_reload: true
+  when: not ansible_check_mode
