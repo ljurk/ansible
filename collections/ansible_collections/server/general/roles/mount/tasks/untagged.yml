@@ -1,0 +1,23 @@
+---
+- name: Install dependencies
+  ansible.builtin.package:
+    name: "{{ mount__deps }}"
+- name: Ensure directory exists
+  file:
+    path: "{{ item.name }}"
+    state: directory
+    mode: "0770"
+  loop: "{{ mount__mounts }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Add fstab entry
+  mount:
+    name: "{{ item.name }}"
+    src: "{{ item.src }}"
+    fstype: "{{ item.fstype }}"
+    opts: "{{ item.opts }}"
+    state: mounted
+  loop: "{{ mount__mounts }}"
+  loop_control:
+    label: "{{ item.name }}"
