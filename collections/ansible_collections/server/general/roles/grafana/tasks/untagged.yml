@@ -1,0 +1,65 @@
+---
+- name: Create user
+  ansible.builtin.user:
+    name: "{{ grafana__user }}"
+    uid: "{{ grafana__uid }}"
+    create_home: false
+
+- name: Create required folders
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ grafana__user }}"
+    group: "{{ grafana__user }}"
+    mode: "u=rwx,g=rx,o=rx"
+  loop:
+    - /opt/grafana
+    - /opt/grafana/plugins
+
+- name: Create provisioning dirs
+  ansible.builtin.file:
+    path: "/opt/grafana/provisioning/{{ item }}"
+    state: directory
+    owner: "{{ grafana__user }}"
+    group: "{{ grafana__user }}"
+    mode: "u=rwX,g=rX,o="
+  loop:
+    - datasources
+    - dashboards
+    - alerting
+    - plugins
+
+- name: Create datasource provisioning files
+  ansible.builtin.template:
+    src: datasources-default.yaml.j2
+    dest: /opt/grafana/provisioning/datasources/default.yaml
+    owner: "{{ grafana__user }}"
+    group: "{{ grafana__user }}"
+    mode: "u=rw,g=r"
+  no_log: true
+  notify: Restart grafana
+
+- name: Start grafana container
+  containers.podman.podman_container:
+    name: grafana
+    image: docker.io/grafana/grafana
+    state: quadlet
+    quadlet_options:
+      - |
+        [Install]
+        WantedBy=default.target
+    network:
+      - podman-dns
+    volumes:
+      - /opt/grafana:/var/lib/grafana
+      - /opt/grafana/provisioning:/etc/grafana/provisioning
+    env:
+      GF_INSTALL_PLUGINS: "{{ grafana__plugins | join(',') }}"
+      GF_LOG_FILTERS: "rendering:debug"
+      GF_LOG_LEVEL: "error"
+
+- name: Start service
+  ansible.builtin.systemd:
+    name: "grafana"
+    state: started
+    daemon_reload: true

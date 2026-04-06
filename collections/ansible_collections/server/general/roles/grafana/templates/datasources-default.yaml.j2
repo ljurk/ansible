@@ -1,0 +1,7 @@
+# {{ ansible_managed }}
+---
+apiVersion: 1
+
+prune: true
+
+{{ {'datasources': grafana__datasources} | to_json(vault_to_text=True) | from_json | to_nice_yaml }}

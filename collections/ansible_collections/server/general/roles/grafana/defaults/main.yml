@@ -1,0 +1,5 @@
+---
+grafana__user: grafana
+grafana__uid: 472
+grafana__plugins: []
+grafana__datasources: []
