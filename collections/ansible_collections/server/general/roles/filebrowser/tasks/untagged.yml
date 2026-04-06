@@ -1,0 +1,40 @@
+---
+- name: Create folders
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+  loop:
+    - path: /opt/filebrowser
+    - path: /opt/filebrowser/config
+    - path: /opt/filebrowser/db
+
+- name: Deploy filebrowser
+  containers.podman.podman_container:
+    name: "filebrowser"
+    image: docker.io/filebrowser/filebrowser
+    state: quadlet
+    user: root
+    quadlet_options:
+      - |
+        [Install]
+        WantedBy=default.target
+    network:
+      - podman-dns
+    volumes:
+      - "/data:/srv:rw"
+      - "/opt/filebrowser/db:/database:rw"
+      - "/opt/filebrowser/config:/config:rw"
+    cap_drop: "ALL"
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges
+    read_only: true
+
+- name: Start service
+  ansible.builtin.systemd:
+    name: "filebrowser.service"
+    state: started
+    daemon_reload: true
+  when: not ansible_check_mode
