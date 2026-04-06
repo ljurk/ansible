@@ -2,3 +2,9 @@
 - name: Install node_exporter
   package:
     name: prometheus-node-exporter
+
+- name: Create config
+  ansible.builtin.copy:
+    content: 'ARGS="{{ node_exporter__args | join( ) }}"'
+    dest: /etc/default/prometheus-node-exporter
+  notify: Restart node_exporter
