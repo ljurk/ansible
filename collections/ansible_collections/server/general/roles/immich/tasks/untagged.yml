@@ -1,0 +1,92 @@
+---
+- name: Create folders
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner | default(0) }}"
+  loop:
+    - path: /data/images
+    - path: /opt/immich
+    - path: /opt/immich/db
+      owner: 999
+    - path: /opt/immich/model-cache
+
+- name: Start redis
+  containers.podman.podman_container:
+    name: immich-redis
+    image: docker.io/valkey/valkey
+    state: quadlet
+    quadlet_options:
+      - |
+        [Install]
+        WantedBy=default.target
+    network:
+      - podman-dns
+
+- name: Start db
+  containers.podman.podman_container:
+    name: immich-db
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23
+    state: quadlet
+    quadlet_options:
+      - |
+        [Install]
+        WantedBy=default.target
+    env:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: immich
+    volumes:
+      - /opt/immich/db:/var/lib/postgresql/data:rw
+    network:
+      - podman-dns
+
+- name: Start machine_learing
+  containers.podman.podman_container:
+    name: immich-machine-learning
+    image: ghcr.io/immich-app/immich-machine-learning:v2
+    state: quadlet
+    quadlet_options:
+      - |
+        [Install]
+        WantedBy=default.target
+    volumes:
+      - /opt/immich/model-cache:/cache:rw
+    network:
+      - podman-dns
+
+- name: Start immich
+  containers.podman.podman_container:
+    name: immich
+    image: ghcr.io/immich-app/immich-server:v2
+    state: quadlet
+    env:
+      DB_HOSTNAME: immich-db
+      DB_PASSWORD: postgres
+      DB_USERNAME: postgres
+      DB_DATABASE_NAME: immich
+      REDIS_HOSTNAME: immich-redis
+    quadlet_options:
+      - |
+        [Service]
+        Restart=on-failure
+        RestartSec=15
+      - |
+        [Install]
+        WantedBy=default.target
+    volumes:
+      - /data/images:/data
+      - /etc/localtime:/etc/localtime:ro
+    network:
+      - podman-dns
+
+- name: Start services
+  ansible.builtin.systemd:
+    name: "{{ item }}.service"
+    state: started
+    daemon_reload: true
+  loop:
+    - immich-redis
+    - immich-db
+    - immich-machine-learning
+    - immich
