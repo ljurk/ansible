@@ -44,7 +44,7 @@
 - name: Start machine_learing
   containers.podman.podman_container:
     name: immich-machine-learning
-    image: ghcr.io/immich-app/immich-machine-learning:v2
+    image: ghcr.io/immich-app/immich-machine-learning:v3
     state: quadlet
     quadlet_options:
       - |
@@ -58,7 +58,7 @@
 - name: Start immich
   containers.podman.podman_container:
     name: immich
-    image: ghcr.io/immich-app/immich-server:v2
+    image: ghcr.io/immich-app/immich-server:v3
     state: quadlet
     env:
       DB_HOSTNAME: immich-db
