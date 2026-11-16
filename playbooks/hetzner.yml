@@ -7,10 +7,13 @@
     # - server.general.nftables
     - server.general.mount
     - server.general.podman
-    - server.general.node_exporter
-    - server.general.filebrowser
-    - server.general.prometheus
-    - server.general.grafana
     - server.general.immich
-    - server.general.traefik
-    - server.general.tailscale
+
+  tasks:
+    - name: Set Tailscale hostname
+      ansible.builtin.command: tailscale set --hostname photo
+      changed_when: false
+
+    - name: Serve Immich over Tailscale HTTPS
+      ansible.builtin.command: tailscale serve --bg --https=443 http://127.0.0.1:2283
+      changed_when: false

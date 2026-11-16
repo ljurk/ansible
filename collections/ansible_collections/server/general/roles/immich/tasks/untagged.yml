@@ -77,6 +77,8 @@
     volumes:
       - /data/images:/data
       - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "127.0.0.1:2283:2283"
     network:
       - podman-dns
 
