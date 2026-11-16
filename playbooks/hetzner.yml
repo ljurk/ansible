@@ -1,0 +1,16 @@
+---
+# BACKUP
+# tar -I 'zstd -T0 -19' -cf "/data/backup/immich-$(date +%F).tar.zst" -C /data images
+- hosts: hetzner2
+  vars:
+  roles:
+    # - server.general.nftables
+    - server.general.mount
+    - server.general.podman
+    - server.general.node_exporter
+    - server.general.filebrowser
+    - server.general.prometheus
+    - server.general.grafana
+    - server.general.immich
+    - server.general.traefik
+    - server.general.tailscale
